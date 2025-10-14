@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Carbon Credit Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f8f5; text-align: center; padding: 50px; }
+        input { margin: 5px; padding: 8px; width: 200px; }
+        button { padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #218838; }
+        .result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🌿 Carbon Credit Score Calculator 🌿</h1>
+    <div>
+        <input id="Temperature" type="number" placeholder="Temperature (°C)" /><br>
+        <input id="Humidity" type="number" placeholder="Humidity (%)" /><br>
+        <input id="Sunlight" type="number" placeholder="Sunlight (µmol/m²/s)" /><br>
+        <input id="CO2_Emitted_Cars" type="number" placeholder="CO₂ Emitted by Cars (ppm)" /><br>
+        <input id="CO2_Absorbed_Trees" type="number" placeholder="CO₂ Absorbed by Trees (ppm)" /><br>
+        <input id="O2_Released_Trees" type="number" placeholder="O₂ Released by Trees (ppm)" /><br>
+        <button onclick="predictScore()">Calculate</button>
+    </div>
+    <div class="result" id="result"></div>
+
+    <script>
+        async function predictScore() {
+            const data = {
+                Temperature: document.getElementById('Temperature').value,
+                Humidity: document.getElementById('Humidity').value,
+                Sunlight: document.getElementById('Sunlight').value,
+                CO2_Emitted_Cars: document.getElementById('CO2_Emitted_Cars').value,
+                CO2_Absorbed_Trees: document.getElementById('CO2_Absorbed_Trees').value,
+                O2_Released_Trees: document.getElementById('O2_Released_Trees').value
+            };
+            const res = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            document.getElementById('result').innerText = result.Carbon_Credit_Score !== undefined
+                ? `🌱 Carbon Credit Score: ${result.Carbon_Credit_Score}`
+                : `Error: ${result.error}`;
+        }
+    </script>
+</body>
+</html>
