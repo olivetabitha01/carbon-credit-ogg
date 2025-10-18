@@ -24,8 +24,25 @@
     <div class="result" id="result"></div>
 
     <script>
-        async function predictScore() {
-            const data = {
+        async function loadSensorData() {
+            const response = await fetch('/get_sensor');
+            const data = await response.json();
+
+            if (data) {
+                document.getElementById('Temperature').value = data.Temperature || '';
+                document.getElementById('Humidity').value = data.Humidity || '';
+                document.getElementById('Sunlight').value = data.Sunlight || '';
+                document.getElementById('CO2_Emitted_Cars').value = data.CO2_Emitted_Cars || '';
+                document.getElementById('CO2_Absorbed_Trees').value = data.CO2_Absorbed_Trees || '';
+                document.getElementById('O2_Released_Trees').value = data.O2_Released_Trees || '';
+            }
+        }
+
+        // Refresh data every 5 seconds
+        setInterval(loadSensorData, 5000);
+
+        async function calculateCredit() {
+            const payload = {
                 Temperature: document.getElementById('Temperature').value,
                 Humidity: document.getElementById('Humidity').value,
                 Sunlight: document.getElementById('Sunlight').value,
@@ -33,16 +50,17 @@
                 CO2_Absorbed_Trees: document.getElementById('CO2_Absorbed_Trees').value,
                 O2_Released_Trees: document.getElementById('O2_Released_Trees').value
             };
+
             const res = await fetch('/predict', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(payload)
             });
+
             const result = await res.json();
-            document.getElementById('result').innerText = result.Carbon_Credit_Score !== undefined
-                ? `🌱 Carbon Credit Score: ${result.Carbon_Credit_Score}`
-                : `Error: ${result.error}`;
+            document.getElementById('result').innerText = `Carbon Credit: ${result.credit}`;
         }
-    </script>
+</script>
+
 </body>
 </html>
