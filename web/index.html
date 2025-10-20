@@ -3,11 +3,29 @@
 <head>
     <title>Carbon Credit Calculator</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f0f8f5; text-align: center; padding: 50px; }
-        input { margin: 5px; padding: 8px; width: 200px; }
-        button { padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f0f8f5; 
+            text-align: center; 
+            padding: 50px; 
+        }
+        input { 
+            margin: 5px; 
+            padding: 8px; 
+            width: 250px; 
+            font-size: 14px;
+        }
+        button { 
+            padding: 10px 20px; 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            margin-top: 15px;
+        }
         button:hover { background-color: #218838; }
         .result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+        .timestamp { font-size: 13px; color: #555; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -16,32 +34,38 @@
         <input id="Temperature" type="number" placeholder="Temperature (°C)" /><br>
         <input id="Humidity" type="number" placeholder="Humidity (%)" /><br>
         <input id="Sunlight" type="number" placeholder="Sunlight (µmol/m²/s)" /><br>
-        <input id="CO2_Emitted_Cars" type="number" placeholder="CO₂ Emitted by Cars (ppm)" /><br>
+        <input id="CO2_Emitted_Cars" type="number" placeholder="CO₂ Emitted by Cars (ppm)" readonly /><br>
+        <div class="timestamp" id="lastUpdated"></div>
         <input id="CO2_Absorbed_Trees" type="number" placeholder="CO₂ Absorbed by Trees (ppm)" /><br>
         <input id="O2_Released_Trees" type="number" placeholder="O₂ Released by Trees (ppm)" /><br>
         <button onclick="predictScore()">Calculate</button>
     </div>
+
     <div class="result" id="result"></div>
 
     <script>
-        async function loadSensorData() {
-            const response = await fetch('/get_sensor');
-            const data = await response.json();
+        // 🛰️ Fetch sensor data periodically
+       
+    async function loadSensorData() {
+        const response = await fetch('/get_sensor');
+        const data = await response.json();
 
-            if (data) {
-                document.getElementById('Temperature').value = data.Temperature || '';
-                document.getElementById('Humidity').value = data.Humidity || '';
-                document.getElementById('Sunlight').value = data.Sunlight || '';
-                document.getElementById('CO2_Emitted_Cars').value = data.CO2_Emitted_Cars || '';
-                document.getElementById('CO2_Absorbed_Trees').value = data.CO2_Absorbed_Trees || '';
-                document.getElementById('O2_Released_Trees').value = data.O2_Released_Trees || '';
-            }
+        if (data && data.CO2_Emitted_Cars !== undefined) {
+            document.getElementById('CO2_Emitted_Cars').value = data.CO2_Emitted_Cars;
         }
 
-        // Refresh data every 5 seconds
-        setInterval(loadSensorData, 5000);
+        if (data && data.last_updated) {
+            document.getElementById('lastUpdated').innerText = `Last updated: ${data.last_updated}`;
+        }
+    }
 
-        async function calculateCredit() {
+    // ⏳ Only CO2 updates every 5 seconds
+    setInterval(loadSensorData, 5000);
+
+ // refresh every 5 seconds
+
+        // 📊 Send all values (manual + auto) to ML model
+        async function predictScore() {
             const payload = {
                 Temperature: document.getElementById('Temperature').value,
                 Humidity: document.getElementById('Humidity').value,
@@ -58,9 +82,13 @@
             });
 
             const result = await res.json();
-            document.getElementById('result').innerText = `Carbon Credit: ${result.credit}`;
+            if (result.Carbon_Credit_Score !== undefined) {
+                document.getElementById('result').innerText = `Carbon Credit: ${result.Carbon_Credit_Score}`;
+            } else if (result.error) {
+                document.getElementById('result').innerText = `Error: ${result.error}`;
+            }
         }
-</script>
-
+    </script>
 </body>
 </html>
+
